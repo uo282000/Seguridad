@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DescrifradorFicheros
+namespace CifradorFicheros
 {
     internal class Program
     {
@@ -30,28 +30,28 @@ namespace DescrifradorFicheros
             proveedor.Key = Clave;
             proveedor.IV = VI;
 
-            FileStream input = new FileStream("Texto6Cifrado.bin",
+            FileStream input = new FileStream("Texto6.txt",
                 FileMode.Open, FileAccess.Read, FileShare.None);
-
-            FileStream output = new FileStream("Texto6Descifrado.bin",
+            
+            FileStream output = new FileStream("Texto6Cifrado.bin",
                 FileMode.Create, FileAccess.Write, FileShare.None);
 
-            ICryptoTransform descifrador = proveedor.CreateDecryptor();
+            ICryptoTransform cifrador = proveedor.CreateEncryptor();
 
             CryptoStream cryptoStream = new CryptoStream(
-                input, descifrador, CryptoStreamMode.Read);
+                output, cifrador, CryptoStreamMode.Write);
 
             byte[] buffer = new byte[4096];
             int leidos;
 
-            while ((leidos = cryptoStream.Read(buffer, 0, buffer.Length)) > 0)
+            while ((leidos = input.Read(buffer, 0, buffer.Length)) > 0)
             {
-                output.Write(buffer, 0, leidos);
+                cryptoStream.Write(buffer, 0, leidos);
             }
 
             cryptoStream.Close();
-            descifrador.Dispose();
-            output.Close();
+            cifrador.Dispose();
+            input.Close();
         }
     }
 }
