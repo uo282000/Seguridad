@@ -1,4 +1,4 @@
 <Solution>
   <Project Path="CifradorFicheros/CifradorFicheros.csproj" />
-  <Project Path="Practica3.6/DescrifradorFicheros.csproj" />
+  <Project Path="DescifradorFicheros/DescifradorFicheros.csproj" />
 </Solution>
