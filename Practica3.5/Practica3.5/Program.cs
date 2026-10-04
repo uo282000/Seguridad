@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Apoyo;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Apoyo;
 
-namespace Practica3
+namespace Practica3._5
 {
     internal class Program
     {
@@ -19,30 +19,19 @@ namespace Practica3
 
             for (int i = 0; i < Clave.Length; i++)
             {
-                Clave[i] = (byte)(i%256);
+                Clave[i] = (byte)(i % 256);
             }
             byte[] VI = new byte[TamClave];
             for (int i = 0; i < VI.Length; i++)
             {
                 VI[i] = (byte)((i + 160) % 256);
             }
-            //byte[] TextoPlano =
-            //{
-            //    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-            //    0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
-            //    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-            //    0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
-            //    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-            //    0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
-            //};
 
-            byte[] TextoPlano =
+            string[] TextoPlano =
             {
-                0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-                0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
-                0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-                0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
-                0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37
+                "a", "b", "c", "d", "e", "f", "g", "h", "i",
+                "j", "k", "l", "m", "n", "o", "p", "q", "r",
+                "s", "t", "u", "v", "w", "x", "y", "z"
             };
 
             //Pruebas parte 4:cambiar el tipo de servicio criptograficao
@@ -50,18 +39,13 @@ namespace Practica3
             //AesManaged proveedor = new AesManaged();
             Console.WriteLine("Configuracion por defecto");
             Console.WriteLine("BlockSize: " + proveedor.BlockSize);
-            Console.WriteLine("KeySize: "+proveedor.KeySize);
-            Console.WriteLine("Padding: "+proveedor.Padding);
-            Console.WriteLine("Mode: "+proveedor.Mode);
-
-            //Pruebas parte 4 : cambiar los parámetros (CipherMode y PaddingMode)
-            //proveedor.KeySize = 128;
-            //proveedor.Padding = PaddingMode.ISO10126;
-            //proveedor.Mode = CipherMode.ECB;
+            Console.WriteLine("KeySize: " + proveedor.KeySize);
+            Console.WriteLine("Padding: " + proveedor.Padding);
+            Console.WriteLine("Mode: " + proveedor.Mode);
 
             proveedor.KeySize = TamClave * 8;
-            proveedor.Padding = PaddingMode.Zeros;
-            proveedor.Mode = CipherMode.ECB;
+            proveedor.Padding = PaddingMode.PKCS7;
+            proveedor.Mode = CipherMode.CBC;
 
             Console.WriteLine("\nConfiguracion Asignada");
             Console.WriteLine("KeySize: " + proveedor.KeySize);
@@ -89,34 +73,31 @@ namespace Practica3
             Console.WriteLine("\nVector de inicialización: ");
             ayuda.WriteHex(proveedor.IV, proveedor.IV.Length);
 
+
+
+
             //Proceso de cifrado de un array de bytes 
 
-            FileStream fichero = new FileStream("zz_TextoCifrado.bin", 
+            FileStream fichero = new FileStream("zz_TextoCifrado.bin",
                 FileMode.Create, FileAccess.Write, FileShare.None);
 
             ICryptoTransform cifrador = proveedor.CreateEncryptor();
 
             CryptoStream cryptoStream = new CryptoStream(
                 fichero, cifrador, CryptoStreamMode.Write);
-
-            cryptoStream.Write(TextoPlano, 0, TextoPlano.Length);
-
-            cryptoStream.Flush();
             
-            cryptoStream.Close();
+            StreamWriter escritor = new StreamWriter(cryptoStream);
 
+            foreach (string letra in TextoPlano)
+            {
+                escritor.WriteLine(letra);
+            }
+
+            //cerramos las herramientas
+            escritor.Close();
             cifrador.Dispose();
 
-            fichero.Close();
-
             //Proceso de descifrado de un array de bytes 
-
-            byte[] TextoDescifrado = new byte[new FileInfo("zz_TextoCifrado.bin").Length];
-
-            for (int i = 0; i < TextoDescifrado.Length; i++)
-            {
-                TextoDescifrado[i] = 0xFF;
-            }
 
             FileStream ficheroCifrado = new FileStream("zz_TextoCifrado.bin",
                 FileMode.Open, FileAccess.Read, FileShare.None);
@@ -126,21 +107,16 @@ namespace Practica3
             CryptoStream cryptoStream2 = new CryptoStream(
                 ficheroCifrado, descifrador, CryptoStreamMode.Read);
 
-            int bytesLeidos = cryptoStream2.Read(TextoDescifrado, 0, TextoDescifrado.Length);
+            StreamReader lector = new StreamReader(cryptoStream2);
 
-            cryptoStream2.Flush();
-            cryptoStream2.Close();
+            string cadenaDescifrada = lector.ReadToEnd();
+
+            //cerramos las herramientas
+            lector.Close();
             descifrador.Dispose();
-            ficheroCifrado.Close();
 
-            Console.WriteLine("\nBytes devueltos por Read(): " + bytesLeidos);
             Console.WriteLine("\nTexto Descifrado");
-            ayuda.WriteHex(TextoDescifrado, TextoDescifrado.Length);
-            Console.WriteLine("Array completo (para ver los 0xFF sobrantes)");
-            ayuda.WriteHex(TextoDescifrado, TextoDescifrado.Length);
-
-
-
+            Console.WriteLine(cadenaDescifrada);
         }
     }
 }
